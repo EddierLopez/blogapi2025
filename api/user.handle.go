@@ -74,7 +74,7 @@ func (server *Server) login(ctx *gin.Context) {
 		return
 	}
 	//IMPORTANTE QUE LA DURACIÓN SE ESTABLEZCA EN EL .ENV
-	accessToken, err := server.tokenBuilder.CreateToken(user.Email, time.Minute)
+	accessToken, err := server.tokenBuilder.CreateToken(user.Email, time.Minute*5)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
