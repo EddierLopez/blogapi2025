@@ -89,3 +89,89 @@ func (server *Server) login(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, resp)
 }
+
+type updateUserRequest struct {
+	Name     string `json:"name"`
+	LastName string `json:"last_name"`
+	ID       int32  `json:"id"`
+}
+
+func (server *Server) updateUser(ctx *gin.Context) {
+	var req updateUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	args := dto.UpdateUserParams{
+		ID:       req.ID,
+		Name:     req.Name,
+		LastName: req.LastName,
+	}
+	result, err := server.dbtx.UpdateUser(ctx, args)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	var rows, _ = result.RowsAffected()
+	ctx.JSON(http.StatusOK, gin.H{"rows_affected": rows})
+}
+
+type updatePasswordRequest struct {
+	Password string `json:"password"`
+	ID       int32  `json:"id"`
+}
+
+func (server *Server) updatePassword(ctx *gin.Context) {
+	var req updatePasswordRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	args := dto.UpdateUserPasswordParams{
+		ID:       req.ID,
+		Password: req.Password,
+	}
+	result, err := server.dbtx.UpdateUserPassword(ctx, args)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	var rows, _ = result.RowsAffected()
+	ctx.JSON(http.StatusOK, gin.H{"rows_affected": rows})
+}
+
+type updateRoleRequest struct {
+	Role string `json:"role"`
+	ID   int32  `json:"id"`
+}
+
+func (server *Server) updateRole(ctx *gin.Context) {
+	var req updateRoleRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	args := dto.UpdateUserRoleParams{
+		ID:   req.ID,
+		Role: req.Role,
+	}
+	result, err := server.dbtx.UpdateUserRole(ctx, args)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	var rows, _ = result.RowsAffected()
+	ctx.JSON(http.StatusOK, gin.H{"rows_affected": rows})
+}

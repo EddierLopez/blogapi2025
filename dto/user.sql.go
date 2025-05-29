@@ -55,3 +55,43 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	)
 	return i, err
 }
+
+const updateUser = `-- name: UpdateUser :execresult
+UPDATE users SET name=?,last_name=?,updated_at=now() WHERE id=?
+`
+
+type UpdateUserParams struct {
+	Name     string `json:"name"`
+	LastName string `json:"last_name"`
+	ID       int32  `json:"id"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateUser, arg.Name, arg.LastName, arg.ID)
+}
+
+const updateUserPassword = `-- name: UpdateUserPassword :execresult
+UPDATE users set password=? WHERE id=?
+`
+
+type UpdateUserPasswordParams struct {
+	Password string `json:"password"`
+	ID       int32  `json:"id"`
+}
+
+func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateUserPassword, arg.Password, arg.ID)
+}
+
+const updateUserRole = `-- name: UpdateUserRole :execresult
+UPDATE users set role=? WHERE id=?
+`
+
+type UpdateUserRoleParams struct {
+	Role string `json:"role"`
+	ID   int32  `json:"id"`
+}
+
+func (q *Queries) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateUserRole, arg.Role, arg.ID)
+}

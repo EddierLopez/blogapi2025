@@ -39,11 +39,17 @@ func NewServer(dbtx *dto.DbTransaction) (*Server, error) {
 	router.POST("api/v1/user", server.createUser)
 	router.GET("api/v1/category/:id", server.getCategory)
 	router.GET("api/v1/category", server.getCategories)
+	router.GET("api/v1/post", server.getAllPost)
+	router.GET("api/v1/post/:category_id", server.getPostByCategory)
 
 	//RUTAS CON MIDDLEWARE
 	authRoutes := router.Group("/").Use(authMiddleware(server.tokenBuilder))
 	authRoutes.POST("api/v1/category", server.createCategory)
-
+	authRoutes.POST("api/v1/post", server.createPost)
+	authRoutes.PUT("api/v1/user/:id", server.updateUser)
+	authRoutes.PUT("api/v1/user", server.updateUser)
+	authRoutes.PUT("api/v1/userpass", server.updatePassword)
+	authRoutes.PUT("api/v1/userrole", server.updateRole)
 	///FIN RUTAS///
 	server.router = router
 	return server, nil

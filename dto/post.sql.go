@@ -10,12 +10,12 @@ import (
 	"database/sql"
 )
 
-const createPost = `-- name: createPost :execresult
+const createPost = `-- name: CreatePost :execresult
 INSERT INTO posts(id,user_id,category_id,title,content,image,created_at,updated_at)
 VALUES(?,?,?,?,?,?,now(),now())
 `
 
-type createPostParams struct {
+type CreatePostParams struct {
 	ID         int32  `json:"id"`
 	UserID     int32  `json:"user_id"`
 	CategoryID int32  `json:"category_id"`
@@ -24,7 +24,7 @@ type createPostParams struct {
 	Image      string `json:"image"`
 }
 
-func (q *Queries) createPost(ctx context.Context, arg createPostParams) (sql.Result, error) {
+func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, createPost,
 		arg.ID,
 		arg.UserID,
@@ -35,11 +35,19 @@ func (q *Queries) createPost(ctx context.Context, arg createPostParams) (sql.Res
 	)
 }
 
-const getAllPost = `-- name: getAllPost :many
+const deletePost = `-- name: DeletePost :execresult
+DELETE FROM posts where id=?
+`
+
+func (q *Queries) DeletePost(ctx context.Context, id int32) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deletePost, id)
+}
+
+const getAllPost = `-- name: GetAllPost :many
 SELECT id, user_id, category_id, title, content, image, created_at, updated_at FROM posts
 `
 
-func (q *Queries) getAllPost(ctx context.Context) ([]Post, error) {
+func (q *Queries) GetAllPost(ctx context.Context) ([]Post, error) {
 	rows, err := q.db.QueryContext(ctx, getAllPost)
 	if err != nil {
 		return nil, err
@@ -71,11 +79,11 @@ func (q *Queries) getAllPost(ctx context.Context) ([]Post, error) {
 	return items, nil
 }
 
-const getPostById = `-- name: getPostById :one
+const getPostById = `-- name: GetPostById :one
 SELECT id, user_id, category_id, title, content, image, created_at, updated_at FROM posts WHERE id=? LIMIT 1
 `
 
-func (q *Queries) getPostById(ctx context.Context, id int32) (Post, error) {
+func (q *Queries) GetPostById(ctx context.Context, id int32) (Post, error) {
 	row := q.db.QueryRowContext(ctx, getPostById, id)
 	var i Post
 	err := row.Scan(
@@ -89,4 +97,76 @@ func (q *Queries) getPostById(ctx context.Context, id int32) (Post, error) {
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getPostsByCategory = `-- name: GetPostsByCategory :many
+SELECT id, user_id, category_id, title, content, image, created_at, updated_at FROM posts WHERE category_id=?
+`
+
+func (q *Queries) GetPostsByCategory(ctx context.Context, categoryID int32) ([]Post, error) {
+	rows, err := q.db.QueryContext(ctx, getPostsByCategory, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Post
+	for rows.Next() {
+		var i Post
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.CategoryID,
+			&i.Title,
+			&i.Content,
+			&i.Image,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPostsByUser = `-- name: GetPostsByUser :many
+SELECT id, user_id, category_id, title, content, image, created_at, updated_at FROM posts WHERE user_id=?
+`
+
+func (q *Queries) GetPostsByUser(ctx context.Context, userID int32) ([]Post, error) {
+	rows, err := q.db.QueryContext(ctx, getPostsByUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Post
+	for rows.Next() {
+		var i Post
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.CategoryID,
+			&i.Title,
+			&i.Content,
+			&i.Image,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
