@@ -2,10 +2,14 @@ package api
 
 import (
 	"database/sql"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"restapi/dto"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type createPostRequest struct {
@@ -107,4 +111,52 @@ func (server *Server) deletePost(ctx *gin.Context) {
 	var rows, _ = result.RowsAffected()
 	ctx.JSON(http.StatusOK, gin.H{"rows_affected": rows})
 
+}
+func (server *Server) uploadPostImg(ctx *gin.Context) {
+	fileHeader, err := ctx.FormFile("file0")
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	file, err := fileHeader.Open()
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	defer file.Close()
+	uploadDir := "utils/images/posts"
+	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	filename := uuid.New().String() + "_" + filepath.Base(fileHeader.Filename)
+	destinationFile, err := os.Create(filepath.Join(uploadDir, filename))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	defer destinationFile.Close()
+	_, err = io.Copy(destinationFile, file)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"file_name": filename,
+		"message":   "Archivo cargado exitosamente",
+	})
+}
+
+type getPostImageRequest struct {
+	Name string `uri:"name",binding:"required"`
+}
+
+func (server *Server) getPostImg(ctx *gin.Context) {
+	var req getPostImageRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	fileUrl := "utils/images/posts/" + req.Name
+	ctx.File(fileUrl)
 }

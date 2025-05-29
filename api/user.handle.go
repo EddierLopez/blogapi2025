@@ -49,6 +49,7 @@ type loginResponse struct {
 	User        userResponse `json:"user"`
 }
 type userResponse struct {
+	ID       int32  `json:"id"`
 	Name     string `json:"name"`
 	LastName string `json:"last_name"`
 	Role     string `json:"role"`
@@ -82,6 +83,7 @@ func (server *Server) login(ctx *gin.Context) {
 	resp := loginResponse{
 		AccessToken: accessToken,
 		User: userResponse{
+			ID:       user.ID,
 			Name:     user.Name,
 			LastName: user.LastName,
 			Role:     user.Role,
